@@ -6,6 +6,8 @@
 
 #include "AhoCorasick.h"
 
+#include "utils/LinkedList.h"
+
 #define INF 1000000000//infinit
 #define IATELEN 55000//dimensiunea dictionarului IATE
 #define MAXLEN 1000//len max a unui termen IATE
@@ -44,10 +46,12 @@ private:
     void ProcessNonLemmatised();
     void ProcessLemmatised();
     int ProcessMatches(std::string pathOutput);
+    int ProcessMatches(int fileOutput, std::string pathOutput, LinkedList *outputList);
 
 public:
     FileProcesser(std::map <Match, int>* M, Writer* W, AhoCorasick* DictApproxM, AhoCorasick* DictPerfectM);
     void ReadDictNew();
     void ReadDictTmp();
     int ProcessFile(std::string pathInput, std::string pathOutput);
+    int ProcessFromString(const char *input, LinkedList *outputList);
 };

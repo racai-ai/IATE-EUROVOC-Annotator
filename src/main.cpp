@@ -2,6 +2,9 @@
 #include <string>
 #include <map>
 
+#include "server/http_server.h"
+#include "server/modules/all.h"
+
 #include "FileProcesser.h"
 
 #ifndef MAXFILECH
@@ -44,9 +47,26 @@ void Initialise(){
     logMessage(1, "Finsh Structure Initialization");
 }
 
-int main(){
+int main(int argc, char *argv[]){
     try{
         Initialise();
+        
+        if(argc==3 && strcasecmp(argv[1],"server")==0){
+            int port=atoi(argv[2]);
+            printf("Starting server on port %d\n",port);
+            http_server_init();
+            SENGINE_Server_Run(port);
+            return 0;
+        
+        }else if(argc>1){
+            printf("Syntax:\n");
+            printf("    annotate\n");
+            printf("       starts annotation using list.txt\n\n");
+            printf("    annotate server <PORT>\n");
+            printf("       starts listining on <PORT> for sentences to annotate\n");
+            return -1;
+        }
+        
         FILE*files = fopen("list.txt","r");
         if(files == NULL) throw std::string("Could not open list.txt");
 

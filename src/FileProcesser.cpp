@@ -55,8 +55,18 @@ void FileProcesser::ProcessLemmatised(){//proceseaza fisierul lematizat
         currLine++;
     }
 }
+
+
+
 int FileProcesser::ProcessMatches(std::string pathOutput){
-    FILE*fout = fopen(pathOutput.c_str(),"w");
+    return ProcessMatches(1,pathOutput,NULL);
+}
+
+
+int FileProcesser::ProcessMatches(int fileOutput, std::string pathOutput, LinkedList *outputList){
+    FILE*fout = NULL;
+    if(fileOutput)
+        fout=fopen(pathOutput.c_str(),"w");
 
     MatchesVec.clear();
     ActiveMatchesVec.clear();
@@ -69,41 +79,41 @@ int FileProcesser::ProcessMatches(std::string pathOutput){
     int currLine = 1, nextMatch = 0;;
     for(int i = 0; i < charCount; i++){
         if(fileChars[i] < '0' || fileChars[i] > '9')//daca randul curent nu corespunde unui termen
-            while(fileChars[i] != '\n' && i < charCount) writer -> PrintCh(fileChars[i++], fout);
+            while(fileChars[i] != '\n' && i < charCount) writer -> PrintCh(fileChars[i++], fout, outputList);
         else{//daca randul curent corespunde unui termen
-            while(fileChars[i] != '\n' && i < charCount) writer -> PrintCh(fileChars[i++], fout);
-            writer -> PrintCh('\t', fout);
+            while(fileChars[i] != '\n' && i < charCount) writer -> PrintCh(fileChars[i++], fout, outputList);
+            writer -> PrintCh('\t', fout, outputList);
 
             //printarea tag-urilor IATE
             int mtc = 0;
             for(auto y: ActiveMatchesVec){
-                if(mtc) writer -> PrintCh(';', fout);
-                writer -> PrintNum(y.id, fout), writer -> PrintCh(':', fout), writer -> PrintNum((IATEid[y.index]), fout);
+                if(mtc) writer -> PrintCh(';', fout, outputList);
+                writer -> PrintNum(y.id, fout, outputList), writer -> PrintCh(':', fout, outputList), writer -> PrintNum((IATEid[y.index]), fout, outputList);
                 mtc = 1;
             }
-            if(!mtc) writer -> PrintCh('_', fout);
-            writer -> PrintCh('\t', fout);
+            if(!mtc) writer -> PrintCh('_', fout, outputList);
+            writer -> PrintCh('\t', fout, outputList);
             //printarea tag-urilor EuroVoc
             mtc = 0;
             for(auto y: ActiveMatchesVec){
-                if(mtc) writer -> PrintCh(';', fout);
-                writer -> PrintNum(y.id, fout), writer -> PrintCh(':', fout);
+                if(mtc) writer -> PrintCh(';', fout, outputList);
+                writer -> PrintNum(y.id, fout, outputList), writer -> PrintCh(':', fout, outputList);
                 int comma = 0;
                 for(auto z: EuroVocid[IATEid[y.index]]){
                     //contorizarea termenulul pentru statistica
                     if(z >= 100) Cat[z / 100]++;
                     else Cat[z]++;
 
-                    if(comma) writer -> PrintCh(',', fout);
-                    if(z >= 1000) writer -> PrintNum(z, fout);
-                    else if(z >= 100) writer -> PrintCh('0', fout), writer -> PrintNum(z, fout);
-                    else if(z >= 10) writer -> PrintNum(z, fout);
-                    else writer -> PrintCh('0', fout), writer -> PrintNum(z, fout);
+                    if(comma) writer -> PrintCh(',', fout, outputList);
+                    if(z >= 1000) writer -> PrintNum(z, fout, outputList);
+                    else if(z >= 100) writer -> PrintCh('0', fout, outputList), writer -> PrintNum(z, fout, outputList);
+                    else if(z >= 10) writer -> PrintNum(z, fout, outputList);
+                    else writer -> PrintCh('0', fout, outputList), writer -> PrintNum(z, fout, outputList);
                     comma = 1;
                 }
                 mtc = 1;
             }
-            if(!mtc) writer -> PrintCh('_', fout);
+            if(!mtc) writer -> PrintCh('_', fout, outputList);
         }
 
         //eliminarea termenilor care se termina
@@ -118,11 +128,10 @@ int FileProcesser::ProcessMatches(std::string pathOutput){
             ActiveMatchesVec.push_back(MatchesVec[nextMatch]);
             nextMatch++;
         }
-        writer -> PrintCh('\n', fout);
+        writer -> PrintCh('\n', fout, outputList);
     }
 
-    if(writer -> pbufw) fwrite(writer -> bufw, 1, writer -> pbufw, fout);
-    writer -> pbufw = 0;
+    writer->Flush(fout,outputList);
 
     //determinarea categoriei dominante
     int maxx = 0, catMaxx = 0;
@@ -133,7 +142,7 @@ int FileProcesser::ProcessMatches(std::string pathOutput){
             maxx = pond, catMaxx = y.first;
     }
 
-    fclose(fout);
+    if(fout!=NULL)fclose(fout);
     return catMaxx;
 }
 
@@ -202,7 +211,7 @@ void FileProcesser::ReadDictNew(){
 }
 void FileProcesser::ReadDictTmp(){//proceseaza informatiile EuroVoc
     logMessage(1, "Start processing EuroVoc tags");
-    ReadFile("WordsDatabase2.out");
+    ReadFile("resources/WordsDatabase2.out");
     int pos = 0;
 
     char c = fileChars[pos];
@@ -245,6 +254,21 @@ int FileProcesser::ProcessFile(std::string pathInput, std::string pathOutput){//
     ProcessLemmatised();//procesarea fisierului lematizat
     int catMaxx = ProcessMatches(pathOutput);//procesarea potrivirilor si afisarea outputului
     logMessage(1, "Finsh Processing " + pathInput);
+
+    return catMaxx;
+}
+
+int FileProcesser::ProcessFromString(const char *input, LinkedList *outputList){//proceseaza un text din "input" cu rezultatul in outputList, returneaza categoria dominanta
+    logMessage(1, "Start Processing from String");
+    (*Matches).clear();
+    
+    charCount = strlen(input);
+    strcpy(fileChars,input);
+    
+    ProcessNonLemmatised();//procesarea fisierului nelematizat
+    ProcessLemmatised();//procesarea fisierului lematizat
+    int catMaxx = ProcessMatches(0,std::string(""),outputList);//procesarea potrivirilor si afisarea outputului
+    logMessage(1, "Finsh Processing from String");
 
     return catMaxx;
 }

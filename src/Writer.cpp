@@ -1,17 +1,33 @@
 #include "Writer.h"
 
-void Writer::PrintCh(char c, FILE *fout){
+void Writer::PrintCh(char c, FILE *fout, LinkedList *outputList){
     bufw[pbufw++] = c;
     if(pbufw == BUF_SIZE){
-        if(fwrite(bufw, 1, BUF_SIZE, fout) != BUF_SIZE)
+        if(fout!=NULL && fwrite(bufw, 1, BUF_SIZE, fout) != BUF_SIZE)
             throw std::string("Could not write in file");
+        if(outputList!=NULL){
+            bufw[BUF_SIZE]=0;
+            LinkedList_addString(outputList,bufw);
+        }
         pbufw = 0;
     }
 }
-void Writer::PrintNum(int a, FILE *fout){
+void Writer::PrintNum(int a, FILE *fout, LinkedList *outputList){
     if(a > 0){
-        PrintNum(a / 10, fout);
-        PrintCh(a % 10 + '0', fout);
+        PrintNum(a / 10, fout, outputList);
+        PrintCh(a % 10 + '0', fout, outputList);
+    }
+}
+
+void Writer::Flush(FILE *fout, LinkedList *outputList){
+    if(pbufw>0){
+        if(fout!=NULL && fwrite(bufw, 1, pbufw, fout) != pbufw)
+            throw std::string("Could not write in file");
+        if(outputList!=NULL){
+            bufw[pbufw]=0;
+            LinkedList_addString(outputList,bufw);
+        }
+        pbufw = 0;
     }
 }
 
