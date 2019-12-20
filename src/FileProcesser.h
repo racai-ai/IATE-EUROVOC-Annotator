@@ -54,4 +54,5 @@ public:
     void ReadDictTmp();
     int ProcessFile(std::string pathInput, std::string pathOutput);
     int ProcessFromString(const char *input, LinkedList *outputList);
+    FileProcesser* clone(std::map <Match, int>* M, Writer* W, AhoCorasick* DictApproxM, AhoCorasick* DictPerfectM);
 };

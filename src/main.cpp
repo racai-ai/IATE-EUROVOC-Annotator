@@ -7,9 +7,6 @@
 
 #include "FileProcesser.h"
 
-#ifndef MAXFILECH
-#define MAXFILECH 100000000//len max a unui fisier procesat
-#endif
 #define MAXPATHLEN 100
 
 #ifndef MATCH
@@ -44,8 +41,11 @@ void Initialise(){
 
     DictApproxMatch.BfsFail();
     DictPerfectMatch.BfsFail();
+
     logMessage(1, "Finsh Structure Initialization");
 }
+
+pthread_spinlock_t slock_one_client;
 
 int main(int argc, char *argv[]){
     try{
@@ -55,6 +55,7 @@ int main(int argc, char *argv[]){
             int port=atoi(argv[2]);
             printf("Starting server on port %d\n",port);
             http_server_init();
+    	    pthread_spin_init(&slock_one_client, 0);
             SENGINE_Server_Run(port);
             return 0;
         

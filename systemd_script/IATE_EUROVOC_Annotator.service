@@ -1,0 +1,16 @@
+[Unit]
+Description=IATE EUROVOC Annotator
+After=network.target auditd.service
+
+[Service]
+ExecStart=./annotator server 9001
+WorkingDirectory=/data/IATE_EUROVOC_Annotator
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+

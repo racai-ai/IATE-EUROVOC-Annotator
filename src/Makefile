@@ -59,4 +59,5 @@ clean:
 	rm -f server/*.o
 	rm -f server/encoding/*.o
 	rm -f server/modules/annotate/*.o
+	rm -f utils/*.o
 	rm -f annotate

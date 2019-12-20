@@ -3,6 +3,17 @@
 int FileProcesser::ReadFile(std::string pathInput){//citeste fisierul din pathInput
     FILE*fin = fopen(pathInput.c_str(), "r");
     if(fin == NULL) throw std::string("Could not open ") + pathInput;
+    
+    if(fileChars!=NULL)free(fileChars);
+    
+    fseek(fin, 0L, SEEK_END);
+    unsigned long sz = ftell(fin);
+    fseek(fin, 0L, SEEK_SET);
+    
+    fileChars=(char*)malloc((sz+100)*sizeof(char));
+    if(fileChars==NULL) throw std::string("Can not allocate memory for ") + pathInput;
+    memset(fileChars, 0x00, (sz+100) * sizeof(char));
+    
     int next = 0;
     while(!feof(fin)){
         fgets(fileChars + next, INF, fin);
@@ -20,8 +31,8 @@ void FileProcesser::ProcessCh(char &prevc, char c, int &caps, int currLine){//in
     prevc = c;
 }
 void FileProcesser::ProcessNonLemmatised(){//proceseaza fisierul nelematizat
-    DictApproxMatch -> Reset();
-    DictPerfectMatch -> Reset();
+    DictApproxMatch -> Reset(charCount);
+    DictPerfectMatch -> Reset(charCount);
 
     char prevc = 0;
     int currLine = 1, caps = 1;
@@ -37,8 +48,8 @@ void FileProcesser::ProcessNonLemmatised(){//proceseaza fisierul nelematizat
     }
 }
 void FileProcesser::ProcessLemmatised(){//proceseaza fisierul lematizat
-    DictApproxMatch -> Reset();
-    DictPerfectMatch -> Reset();
+    DictApproxMatch -> Reset(charCount);
+    DictPerfectMatch -> Reset(charCount);
 
     char prevc = 0;
     int currLine = 1, caps = 1;
@@ -147,9 +158,9 @@ int FileProcesser::ProcessMatches(int fileOutput, std::string pathOutput, Linked
 }
 
 FileProcesser::FileProcesser(std::map <Match, int>* M, Writer* W, AhoCorasick* DictApproxM, AhoCorasick* DictPerfectM){
-    fileChars = new char[MAXFILECH];
+    fileChars = NULL;
+    charCount=0;
     IATEid = new int[IATELEN];
-    memset(fileChars, 0x00, MAXFILECH * sizeof(char));
     memset(IATEid, 0x00, IATELEN * sizeof(int));
 
     Matches = M;
@@ -157,6 +168,7 @@ FileProcesser::FileProcesser(std::map <Match, int>* M, Writer* W, AhoCorasick* D
     DictApproxMatch = DictApproxM;
     DictPerfectMatch = DictPerfectM;
 }
+
 void FileProcesser::ReadDictNew(){
     logMessage(1, "Start processing IATE terms");
     ReadFile("resources/WordsDatabase2.out");
@@ -209,6 +221,7 @@ void FileProcesser::ReadDictNew(){
     }
     logMessage(1, "Finsh processing IATE terms");
 }
+
 void FileProcesser::ReadDictTmp(){//proceseaza informatiile EuroVoc
     logMessage(1, "Start processing EuroVoc tags");
     ReadFile("resources/WordsDatabase2.out");
@@ -246,6 +259,7 @@ void FileProcesser::ReadDictTmp(){//proceseaza informatiile EuroVoc
     }
     logMessage(1, "Finsh processing EuroVoc tags");
 }
+
 int FileProcesser::ProcessFile(std::string pathInput, std::string pathOutput){//proceseaza un fisier din pathInput, afiseaza rezultatul in pathOutput, returneaza categoria dominanta
     logMessage(1, "Start Processing " + pathInput);
     (*Matches).clear();
@@ -255,6 +269,8 @@ int FileProcesser::ProcessFile(std::string pathInput, std::string pathOutput){//
     int catMaxx = ProcessMatches(pathOutput);//procesarea potrivirilor si afisarea outputului
     logMessage(1, "Finsh Processing " + pathInput);
 
+    if(fileChars!=NULL){free(fileChars);fileChars=NULL;}
+
     return catMaxx;
 }
 
@@ -263,12 +279,23 @@ int FileProcesser::ProcessFromString(const char *input, LinkedList *outputList){
     (*Matches).clear();
     
     charCount = strlen(input);
-    strcpy(fileChars,input);
+    fileChars=(char*)input;
+    
+    //strcpy(fileChars,input);
     
     ProcessNonLemmatised();//procesarea fisierului nelematizat
     ProcessLemmatised();//procesarea fisierului lematizat
     int catMaxx = ProcessMatches(0,std::string(""),outputList);//procesarea potrivirilor si afisarea outputului
     logMessage(1, "Finsh Processing from String");
 
+    fileChars=NULL; // don't free
+
     return catMaxx;
+}
+
+FileProcesser *FileProcesser::clone(std::map <Match,int>* M, Writer *W, AhoCorasick* DictApproxM, AhoCorasick* DictPerfectM){
+    FileProcesser *fp=new FileProcesser(M,W,DictApproxM, DictPerfectM);
+    fp->IATEid=this->IATEid;
+    fp->EuroVocid=this->EuroVocid;
+    return fp;
 }

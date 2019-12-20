@@ -1,9 +1,7 @@
 #include "AhoCorasick.h"
 
 AhoCorasick::AhoCorasick(std::map <Match, int>* M){
-    prov = new int[MAXFILECH];
-    memset(prov, 0x00, MAXFILECH * sizeof(int));
-
+    prov = NULL;
     countApprox = countPerfect = 0;
     Matches = M;
 
@@ -50,9 +48,15 @@ void AhoCorasick::BfsFail(){
     }
     logMessage(1, "Finsh creating Aho-Corasick fail edges");
 }
-void AhoCorasick::Reset(){
+void AhoCorasick::Reset(unsigned long size){
     S = T;
     next = 0;
+
+    if(prov!=NULL)free(prov);
+
+    prov=(int*)malloc(size*sizeof(int));
+    memset(prov, 0x00, size * sizeof(int));
+    
 }
 void AhoCorasick::InsertAhoFromString(char *word, int cnt, int index, int caps){
     S = T;

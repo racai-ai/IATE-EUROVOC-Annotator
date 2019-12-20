@@ -52,7 +52,7 @@ public:
     AhoCorasick(std::map <Match, int>* M);
     void InitializeAho();
     void BfsFail();
-    void Reset();
+    void Reset(unsigned long size);
     void InsertAhoFromString(char *word, int cnt, int index, int caps = 0);
 
     char ApproxMatchProcessCh(char prevc, char c, int &cnt2ApproxMatch);
