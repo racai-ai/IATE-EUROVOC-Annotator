@@ -32,8 +32,9 @@ int LinkedList_add(LinkedList *list, const void *value, unsigned long value_sz){
 	item=list;
     }else{
 	item=LinkedList_new();
-	list->last=item;
 	if(list->next==NULL)list->next=item;
+	else list->last->next=item;
+	list->last=item;
     }
     
     item->value_sz=sz;
